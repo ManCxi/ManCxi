@@ -1,41 +1,47 @@
 #!/bin/bash
+yum -y install expect 
 
-yum=`yum repolist | awk -F: '/repolist/{print $2}' |sed 's/,//'`
-[ $yum -gt 0 ] && echo "yum源可用" || echo "yum源不可用"
-rpm -q expect
-if [ $? -eq 0 ];then
-echo "expect 已经安装"
-else
-echo "expect 未安装,正在安装..."
-yum -y install expect
-fi
+vm7(){
 
-yum install -y wget 
+    for i in 96 97 98 99
+    do
+expect <<EOF
+spawn clone-vm7
+expect "Enter VM number:" {send "$i\r"}
+expect "#"                {send "exit\r"}
+expect "#"                {send "exit\r"}
+EOF
+    done 
+} 
 
-wget -O install.sh http://download.bt.cn/install/install_6.0.sh
 
-sh install.sh
+
+cp96(){
+
+virsh start tedu_node96
 expect <<oppo
-set timeout 10
-expect "Do you want to install Bt-Panel to the /www directory now?(y/n):"       {send "y\r"}
+set timeout 35
+spawn virsh console tedu_node96
+expect "localhost login:"           {send "root\r"}
+expect "Password:"                  {send "123456\r"}
+expect "#"                          {send "nmcli connection modify eth2 ipv4.method maunal ipv4.addresses 201.1.1.100/24 connection.autoconnect yes\r"}
+expect "#"                          {send "nmcli connection up eth2\r"}
+expect "#"                          {send "exit\r"}
 oppo
 
-if [ $? -eq 0];then
+cd /linux-soft/02/
+tar -xf lnmp_soft.tar.gz
+cd lnmp_soft/
+scp nginx-1.12.2.tar.gz root@201.1.1.100:/root/
 
-    rm -f /www/server/panel/data/admin_path.pl
+expect <<oppo
+spawn ssh root@201.1.1.100
+set timeout 3
+expect "#"                  {send "tar -xf nginx-1.12.2.tar.gz\r"}
+expect "#"                  {send "cd nginx-1.12.2\r"}
+expect "#"                  {send "useradd -s /sbin/nologin nginx\r"}
+expect "#"                  {send "./configure --user=nginx -- group=ngix  --with-http_ssl_module  --with-stream --with-http_stub_status_module\r"}
+expect "#"                  {send "make && make install "}
 
-    cd /www/server/panel && python tools.py panel 123456
+}
 
-    btuser=`cd /www/server/panel && python tools.py panel 123456`
-
-    btpass=123456
-    
-    echo "宝塔面板地址：http://ip地址:8888
-    用户名:$btuser
-    密码：$btpass"
-    
-    else
-    
-    echo "宝塔安装失败"
-
-fi
