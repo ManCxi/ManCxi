@@ -31,7 +31,7 @@ fi
 
 cd /mnt/
 
-tar -xzf /mnt/zabbix-*
+tar -xzf /mnt/zabbix-* -C /mnt/
 
 rm -rf /mnt/zabbix-4*.tar.gz
 
@@ -91,7 +91,9 @@ zabbix_web(){
 
 wget -P /mnt/ http://www.mancxi.cn/sh/nginx.tar.gz
 
-tar -zxvf /mnt/nginx.tar.gz
+cd /mnt/
+
+tar -zxf /mnt/nginx.tar.gz -C /mnt/
 
 rm -rf /mnt/nginx.tar.gz
 
@@ -143,7 +145,7 @@ rm -rf /mnt/zabbix-*
 
 rm -rf /mnt/nginx-*
 
-useradd zabbix
+useradd  -s /sbin/nologin zabbix
 useradd nginx
 /usr/local/nginx/sbin/nginx
 systemctl start php-fpm
@@ -169,7 +171,7 @@ web页面搭建完成,请及时访问web页面进行最后一步安装
 5.剩下的请一直点“Next step”
 
 "
-
+rm -rf /mnt/zabbix-*
 fi
 }
 
